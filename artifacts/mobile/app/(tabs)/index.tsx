@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import {
-  FlatList,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,72 +12,55 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { MuscleGroupCard } from "@/components/MuscleGroupCard";
-import {
-  requestNotificationPermissions,
-  scheduleDailyReminder,
-} from "@/components/NotificationSetup";
 import { Colors } from "@/constants/colors";
+import { useFavorites } from "@/context/FavoritesContext";
+import { useWorkoutPlanner } from "@/context/WorkoutPlannerContext";
 import { EXERCISES, MUSCLE_GROUPS } from "@/data/exercises";
 
 const DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const GREETINGS = ["Good Morning", "Good Afternoon", "Good Evening"];
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return GREETINGS[0];
+  if (h < 18) return GREETINGS[1];
+  return GREETINGS[2];
+}
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const { favorites } = useFavorites();
+  const { workoutDays } = useWorkoutPlanner();
+
   const today = new Date().getDay();
   const dayIndex = today === 0 ? 6 : today - 1;
 
-  useEffect(() => {
-    const setupNotifications = async () => {
-      const granted = await requestNotificationPermissions();
-      if (granted) {
-        await scheduleDailyReminder(8, 0);
-        setNotificationsEnabled(true);
-      }
-    };
-    setupNotifications();
-  }, []);
-
-  const featuredExercise = EXERCISES[Math.floor(Math.random() * 10)];
+  const featuredExercise = useMemo(
+    () => EXERCISES[Math.floor(Math.random() * 12)],
+    []
+  );
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: topPadding + 16 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: topPadding + 16 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Good Morning,</Text>
+            <Text style={styles.greeting}>{getGreeting()},</Text>
             <Text style={styles.appName}>FitPro</Text>
           </View>
-          <View style={styles.headerRight}>
-            <View
-              style={[
-                styles.notifIndicator,
-                {
-                  backgroundColor: notificationsEnabled
-                    ? Colors.success + "20"
-                    : Colors.border,
-                },
-              ]}
-            >
-              <Ionicons
-                name={
-                  notificationsEnabled
-                    ? "notifications"
-                    : "notifications-off"
-                }
-                size={16}
-                color={
-                  notificationsEnabled ? Colors.success : Colors.textMuted
-                }
-              />
-            </View>
+          <View style={styles.logoMark}>
+            <Ionicons name="flash" size={18} color={Colors.primary} />
           </View>
         </View>
 
@@ -87,10 +69,7 @@ export default function HomeScreen() {
           {DAYS_OF_WEEK.map((d, i) => (
             <View
               key={d}
-              style={[
-                styles.dayChip,
-                i === dayIndex && styles.dayChipActive,
-              ]}
+              style={[styles.dayChip, i === dayIndex && styles.dayChipActive]}
             >
               <Text
                 style={[
@@ -120,7 +99,7 @@ export default function HomeScreen() {
         >
           <View style={styles.featuredBadge}>
             <Ionicons name="flash" size={12} color={Colors.background} />
-            <Text style={styles.featuredBadgeText}>TODAY&apos;S PICK</Text>
+            <Text style={styles.featuredBadgeText}>TODAY'S PICK</Text>
           </View>
           <Text style={styles.featuredName}>{featuredExercise.name}</Text>
           <View style={styles.featuredMeta}>
@@ -144,14 +123,16 @@ export default function HomeScreen() {
             <Text style={styles.statLabel}>Exercises</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{MUSCLE_GROUPS.length}</Text>
-            <Text style={styles.statLabel}>Muscle Groups</Text>
+            <Text style={[styles.statValue, { color: "#E040FB" }]}>
+              {favorites.length}
+            </Text>
+            <Text style={styles.statLabel}>Favorites</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={[styles.statValue, { color: Colors.success }]}>
-              {notificationsEnabled ? "ON" : "OFF"}
+              {workoutDays.length}
             </Text>
-            <Text style={styles.statLabel}>Daily Alert</Text>
+            <Text style={styles.statLabel}>Planned</Text>
           </View>
         </View>
 
@@ -182,6 +163,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
   scroll: {
     flex: 1,
@@ -207,15 +189,14 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     letterSpacing: -0.5,
   },
-  headerRight: {
-    paddingTop: 4,
-  },
-  notifIndicator: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+  logoMark: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: Colors.primary + "20",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 6,
   },
   weekStrip: {
     flexDirection: "row",
