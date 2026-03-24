@@ -77,7 +77,7 @@ export const EXERCISES: Exercise[] = [
     name: "Barbell Bench Press",
     muscleGroup: "chest",
     image: "https://images.pexels.com/photos/1229356/pexels-photo-1229356.jpeg?auto=compress&cs=tinysrgb&w=600",
-    videoId: "rT7DgCr-3pg",
+    videoId: "5NStATS0zrw",
     description: "The bench press is the king of chest exercises. Lie flat on a bench, grip the bar just wider than shoulder-width, and press the weight up explosively while lowering it slowly with control.",
     sets: "4",
     reps: "8-12",
